@@ -1,0 +1,133 @@
+@font-face {
+    font-family: "Roboto Black";
+    src: url("../resources/fonts/roboto-black.ttf") format('truetype');
+}
+
+@font-face {
+    font-family: "Roboto Medium";
+    src: url("../resources/fonts/roboto-medium.ttf") format('truetype');
+}
+
+body {
+    font-family: "Open Sans", sans-serif;
+    font-size: 12pt;
+    background-image: linear-gradient(45deg, #ededed 25%, #e1e4e8 25%, #e1e4e8 50%, #ededed 50%, #ededed 75%, #e1e4e8 75%, #e1e4e8 100%);
+    background-size: 28.28px 28.28px;
+    /* background-image: url('../resources/images/spring-background.jpg'); */
+}
+
+yellow {
+    color: var(--yellow);
+}
+
+#main {
+    background-color: white;
+    margin-top: 20px;
+    border: solid 1px #DDD;
+    padding: 1em;
+    border-radius: 0.5em;
+    box-shadow: 2px 5px 10px -6px rgba(0,0,0,0.75);
+}
+
+
+
+#title {
+
+    display:inline-block;
+    background-color: #def1f4;
+    padding-right: 1em;
+    font-family: "Roboto Medium";
+    font-size: 21pt;
+    line-height: 48pt;
+    font-weight: bold;
+}
+
+#motto {
+    background-image: linear-gradient(to right, var(--cyan), #0e616e);
+    text-align: right;
+    line-height: 48pt;
+    color: white;
+    font-family: "Roboto Black";
+    font-size: 18pt;
+}
+
+#active-title,
+#done-title {
+    background-color: var(--light);
+    font-size: 14pt;
+    font-weight: bold;
+    font-family:  "Montserrat";
+    padding: 0 0.5em;
+    line-height: 2em;
+}
+
+a#new-task-button {
+    font-size: 18pt;
+}
+
+#done-title a {
+    font-size: 18pt;
+}
+
+#active-tasks,
+#done-tasks {
+    margin-left: 0.5em;
+}
+
+div.task {
+    line-height: 2em;
+}
+
+#active-tasks div.task:hover label {
+    color: var(--cyan);
+}
+
+#active-tasks a.delete-active-button {
+    display: none
+}
+
+#active-tasks div.task:hover a.delete-active-button {
+    display: initial
+}
+
+#done-tasks a.delete-done-button {
+    display: none
+}
+
+#done-tasks div.task:hover a.delete-done-button {
+    display: initial
+}
+
+#done-tasks div.task:hover label {
+    color: var(--teal);
+}
+
+.col-cyan {
+    color: var(--cyan);
+}
+
+a.col-cyan:hover {
+    color: var(--cyan);
+}
+
+.col-teal {
+    color: var(--teal);
+}
+
+a.col-teal:hover {
+    color: var(--teal);
+}
+
+.orange-control,
+.cyan-control {
+    color: silver;
+}
+
+.orange-control:hover {
+    color: var(--orange);
+}
+
+.cyan-control:hover {
+    color: var(--cyan);
+}
+
