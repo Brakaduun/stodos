@@ -8,7 +8,9 @@
         <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,400;1,600;1,700;1,800&display=swap" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="include/bootstrap/bootstrap-4.4.1.min.css">
         <script src="https://kit.fontawesome.com/75e095d830.js" crossorigin="anonymous"></script>
-        <!-- <script type="text/javascript" src="include/bootstrap/bootstrap-4.4.1.min.js"></script> -->
+        <script type="text/javascript" src="include/jquery/jquery-3.5.0.min.js"></script>
+        <script type="text/javascript" src="include/bootstrap/bootstrap-4.4.1.min.js"></script>
+        <script type="text/javascript" src="include/vue/vue-2.dev.js"></script>
     </head>
     <body>
         <div id="main" class="container">
@@ -17,81 +19,99 @@
                     <i class="fas fa-check-square" style="color: var(--cyan)"></i>
                     <span class="ml-1">Șerban's TODO</span>
                 </div>
-                <div id="motto" class="col-md-6">JUST <yellow>DON'T</yellow> DO IT.</div>
+                <div id="motto" class="col-md-6">JUST <span class="yellow">DON'T</span> DO IT.</div>
             </div>
             <div id="active" class="mt-3">
                 <div id="active-title" class="shadow-sm mb-2">
-                    <span class="align-middle">Current tasks</span>
-                    <a id="new-task-button" href="#new-task" class="orange-control align-middle ml-5">
+                    <span class="align-middle">Current tasks [{{ tasks.active.length }}]</span>
+                    <a id="new-task-button" href="#new-task" 
+                       class="orange-control align-middle ml-5"
+                       @click.prevent="showInput()">
                         <i class="fas fa-plus-square"></i>
                     </a>
                 </div>
                 <div id="active-tasks">
-                    <div id="new-task" class="mt-2 mb-2" style="max-width: 300px">
-                        <input type="text" placeholder="(new task)" class="form-control">
+                    <div id="new-task" class="mt-2 mb-2" style="max-width: 300px"
+                         v-show="input_visible">
+                        <input type="text" 
+                               placeholder="(new task)" 
+                               class="form-control"
+                               ref="newTask"
+                               v-model="input_value"
+                               @keydown.esc="input_visible=false"
+                               @keydown.enter="addTask()">
                     </div>
-                    <div class="task">
-                        <a href="#collapse" class="col-cyan mr-2"><i class="fas fa-check-square"></i></a>
-                        <label>My first task</label>
-                        <a href="#collapse" class="delete-active-button orange-control ml-2"
-                        ><i class="fas fa-trash-alt"></i></a>
-                    </div>
-                    <div class="task">
-                        <a href="#collapse" class="col-cyan mr-2"><i class="far fa-square"></i></a>
-                        <label>My second task</label>
-                        <a href="#collapse" class="delete-active-button orange-control ml-2"
-                        ><i class="fas fa-trash-alt"></i></a>
-                    </div>
-                    <div class="task">
-                        <a href="#collapse" class="col-cyan mr-2"><i class="far fa-square"></i></a>
-                        <label>My third task</label>
-                        <a href="#collapse" class="delete-active-button orange-control ml-2"
-                        ><i class="fas fa-trash-alt"></i></a>
-                    </div>
-                    <div class="task">
-                        <a href="#collapse" class="col-cyan mr-2"><i class="far fa-square"></i>
+                    <div class="task" v-for="task, idx in tasks.active">
+                        <a href="#move" class="col-cyan mr-2" 
+                           @mouseover="task._hover = true"
+                           @mouseleave="task._hover = false"
+                           @click.prevent="moveToDone(idx)">
+                            <i :class="{far: !task._hover, 'fa-square': !task._hover,
+                                        fas: task._hover, 'fa-check-square': task._hover}"
+                            ></i>
                         </a>
-                        <label>My fourth task</label>
-                        <a href="#collapse" class="delete-active-button orange-control ml-2"
+                        <label v-if="!task._edit">{{ task.label }}</label>
+                        <input v-if="task._edit" class="task-input" 
+                               type="text" :value="task.label"
+                               :ref="'activeEdit_'+idx"
+                               @keydown.enter = "saveActiveTask(idx)"
+                               @blur = "saveActiveTask(idx)"
+                               @keydown.escape = "cancelEditActiveTask(idx)">
+                        <a href="#delete" 
+                           class="active-button orange-control ml-2"
+                           @click.prevent="deleteActive(idx)"
                         ><i class="fas fa-trash-alt"></i></a>
+                        <a href="#edit" 
+                           class="active-button orange-control ml-1"
+                           @click.prevent="editActiveTask(idx)"
+                        ><i class="fas fa-edit"></i></a>
                     </div>
                 </div>
             </div>
             <div id="done" class="mt-3">
                 <div id="done-title" class="shadow-sm mb-2">
-                    <span>Done</span>
+                    <span>Done [{{ tasks.done.length }}]</span>
                     <a href="#collapse" class="ml-5 cyan-control">
-                        <i class="fas fa-caret-square-up"></i>
-                        <i class="fas fa-caret-square-down"></i>
+                        <i class="fas fa-caret-square-up" 
+                           v-if="!done_collapsed" 
+                           @click="done_collapsed=true"></i>
+                        <i class="fas fa-caret-square-down" 
+                           v-if="done_collapsed"
+                           @click="done_collapsed=false"></i>
                     </a>
                 </div>
-                <div id="done-tasks">
-                    <div class="task">
-                        <a href="#collapse" class="col-teal mr-2"><i class="far fa-square"></i></a>
-                        <label><s>My first done task</s></label>
-                        <a href="#collapse" class="delete-done-button orange-control ml-2"
+                <div id="done-tasks" v-show="!done_collapsed">
+                    <div class="task" v-for="task, idx in tasks.done">
+                        <a href="#move" class="col-teal mr-2"
+                           @mouseover="task._hover = true"
+                           @mouseleave="task._hover = false"
+                           @click.prevent="moveToActive(idx)">
+                            <i :class="{far: task._hover, 'fa-square': task._hover,
+                                        fas: !task._hover, 'fa-check-square': !task._hover}"></i></a>
+                            <label v-if="!task._edit"><s>{{ task.label }}</s></label>
+                            <input v-if="task._edit" class="task-input" 
+                                   type="text" :value="task.label"
+                                   :ref="'doneEdit_'+idx"
+                                   @keydown.enter = "saveDoneTask(idx)"
+                                   @blur = "saveDoneTask(idx)"
+                                   @keydown.escape = "cancelEditDoneTask(idx)">
+                        <a href="#delete" 
+                           class="done-button orange-control ml-2"
+                           @click.prevent="deleteDone(idx)"
                         ><i class="fas fa-trash-alt"></i></a>
-                    </div>
-                    <div class="task">
-                        <a href="#collapse" class="col-teal mr-2"><i class="fas fa-check-square"></i></a>
-                        <label><s>My second done task</s></label>
-                        <a href="#collapse" class="delete-done-button orange-control ml-2"
-                        ><i class="fas fa-trash-alt"></i></a>
-                    </div>
-                    <div class="task">
-                        <a href="#collapse" class="col-teal  mr-2"><i class="fas fa-check-square"></i></a>
-                        <label><s>My third done task</s></label>
-                        <a href="#collapse" class="delete-done-button orange-control ml-2"
-                        ><i class="fas fa-trash-alt"></i></a>
-                    </div>
-                    <div class="task">
-                        <a href="#collapse" class="col-teal  mr-2"><i class="fas fa-check-square"></i></a>
-                        <label><s>My fourth done task</s></label>
-                        <a href="#collapse" class="delete-done-button orange-control ml-2"
-                        ><i class="fas fa-trash-alt"></i></a>
+                        <a href="#edit" 
+                        class="done-button orange-control ml-1"
+                        @click.prevent="editDoneTask(idx)"
+                     ><i class="fas fa-edit"></i></a>
                     </div>
                 </div>
             </div>
+            <div>
+                <button class="btn btn-primary mt-3" @click="exportCSV()">
+                    Export CSV
+                </button>
+            </div>
         </div>
     </body>
+    <script src="script.js"></script>
 </html>

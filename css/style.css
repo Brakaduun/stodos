@@ -8,6 +8,11 @@
     src: url("../resources/fonts/roboto-medium.ttf") format('truetype');
 }
 
+html {
+    overflow: -moz-scrollbars-vertical; 
+    overflow-y: scroll;
+}
+
 body {
     font-family: "Open Sans", sans-serif;
     font-size: 12pt;
@@ -16,13 +21,14 @@ body {
     /* background-image: url('../resources/images/spring-background.jpg'); */
 }
 
-yellow {
+span.yellow {
     color: var(--yellow);
 }
 
 #main {
     background-color: white;
     margin-top: 20px;
+    margin-bottom: 20px;
     border: solid 1px #DDD;
     padding: 1em;
     border-radius: 0.5em;
@@ -82,24 +88,31 @@ div.task {
     color: var(--cyan);
 }
 
-#active-tasks a.delete-active-button {
+#active-tasks a.active-button {
     display: none
 }
 
-#active-tasks div.task:hover a.delete-active-button {
+#active-tasks div.task:hover a.active-button {
     display: initial
 }
 
-#done-tasks a.delete-done-button {
+#done-tasks a.done-button {
     display: none
 }
 
-#done-tasks div.task:hover a.delete-done-button {
+#done-tasks div.task:hover a.done-button {
     display: initial
 }
 
 #done-tasks div.task:hover label {
     color: var(--teal);
+}
+
+input.task-input {
+    
+    padding: 0.1em 0.25em;
+    border: none;
+    border-bottom: dashed 1px gray;
 }
 
 .col-cyan {
