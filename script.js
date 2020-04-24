@@ -2,7 +2,7 @@ const app = new Vue({
     el: "#main",
     data() {
         return {
-            tasks: {},
+            tasks: {active: [], done: []},
             done_collapsed: true,
             input_visible: false,
             input_value: ""
@@ -48,7 +48,25 @@ const app = new Vue({
                 active: this.tasks.active.map(t => this.prepareTask(t)),
                 done: this.tasks.done.map(t => this.prepareTask(t))
             }
-            localStorage.setItem('tasks', JSON.stringify(prepTasks))
+            $.post("tasks.php?action=save", {tasks: prepTasks})
+            .done(data => {
+                if (data == "KO") {
+                    alert("Save failed!")
+                    return
+                }
+                if (data == "OK") {
+                    return
+                }
+                alert("Unknown response")
+            })
+            .fail((jqXHR, textStatus, errorThrown) => {
+                console.log(jqXHR)
+                alert("Save failed (AJAX: " + jqXHR.status + " " +
+                      jqXHR.statusText + ")")
+            })
+            .always(()=>{
+                //TODO
+            })
         },
         prepareTask(task) {
             let ntask = {}
@@ -115,18 +133,31 @@ const app = new Vue({
         },
     },
     created() {
-        let st = JSON.parse(localStorage.getItem('tasks'))
-        this.tasks = {
-                active: st.active.map(i => {
+        $.post('tasks.php?action=get')
+         .done(data => {
+             console.log(data)
+             data.active = (data.active === undefined ? [] : data.active)
+             data.done = (data.done === undefined ? [] : data.done)
+             this.tasks = {
+                active: data.active.map(i => {
                     i._done = false; 
                     i._edit = false;
                     return i}),
-                done: st.done.map(i => {
+                done: data.done.map(i => {
                     i._done = false; 
                     i._edit = false;
                     return i
-                })
+                }) 
         }
+        })
+        .fail(error => {
+            console.log(error)
+            alert('Retrieving tasks failed! ')
+        })
+        .always(()=>{
+            //TODO
+        })
+
     }
 })
 
