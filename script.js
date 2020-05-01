@@ -2,35 +2,21 @@ const app = new Vue({
     el: "#main",
     data() {
         return {
-            tasks: {active: [], done: []},
+            tasks: [],
             done_collapsed: true,
             input_visible: false,
             input_value: ""
         }
     },
+    computed: {
+        activeTasks() {
+            return this.tasks.filter (t => { return t.done == "0" })
+        },
+        doneTasks() {
+            return this.tasks.filter (t => { return t.done == "1" })
+        }
+    },
     methods: {
-        moveToDone(idx) {
-            this.tasks.active[idx]._hover = false
-            this.tasks.active[idx].label = this.tasks.active[idx].label.replace("[UNDONE] ", "")
-            this.tasks.done.splice(0, 0, this.tasks.active[idx])
-            this.$delete(this.tasks.active, idx)
-            this.saveTasks()
-        },
-        moveToActive(idx) {
-            this.tasks.done[idx]._hover = false
-            this.tasks.done[idx].label = "[UNDONE] " + this.tasks.done[idx].label
-            this.tasks.active.splice(0, 0, this.tasks.done[idx])
-            this.$delete(this.tasks.done, idx)
-            this.saveTasks()
-        },
-        deleteActive(idx) {
-            this.tasks.active.splice(idx, 1)
-            this.saveTasks()
-        },
-        deleteDone(idx) {
-            this.tasks.done.splice(idx, 1)
-            this.saveTasks()
-        },
         showInput() {
             this.input_visible = true
             this.$nextTick(() => {
@@ -38,77 +24,116 @@ const app = new Vue({
                 this.$refs.newTask.focus()
             })
         },
+        editTask(task)
+        {
+            task._edit = true
+            this.$nextTick(()=>{
+                this.$refs['edit_'+task.id][0].select()
+            })
+        },
+        deleteActive(idx) {
+            this.tasks.active.splice(idx, 1)
+            this.saveTasks()
+        },
+
+        deleteDone(idx) {
+            this.tasks.done.splice(idx, 1)
+            this.saveTasks()
+        },
+
         addTask() {
-            this.tasks.active.splice(0, 0, {label: this.input_value, _hover: false})
-            this.input_visible = false
-            this.saveTasks()
+            let params = {label: this.input_value, done: "0"}
+            $.post("tasks.php?action=insert", params)
+                .done(response => {
+                    if (response == "KO") {
+                        alert("Insert task failed!")
+                        return
+                    }
+                    else {
+                        task = {label: this.input_value, 
+                                done: false, 
+                                id: response,
+                                _hover: false,
+                                _edit: false}
+                        this.tasks.push(task)
+                        this.input_visible = false
+                        return
+                    }
+                    alert("[updateTaskStatusDb] Unknown response")
+                })
+                .fail(jqXHR => {
+                    console.log(jqXHR)
+                    alert("Insert task failed!")
+                })
         },
-        saveTasks() {
-            let prepTasks = {
-                active: this.tasks.active.map(t => this.prepareTask(t)),
-                done: this.tasks.done.map(t => this.prepareTask(t))
-            }
-            $.post("tasks.php?action=save", {tasks: prepTasks})
-            .done(data => {
-                if (data == "KO") {
-                    alert("Save failed!")
+        updateTaskStatusDb(task, done) {
+            let params = {id: task.id, done: done ? "1" : "0"}
+            $.post("tasks.php?action=update_status", params)
+            .done(response => {
+                if (response == "KO") {
+                    alert("Update task status failed!")
                     return
                 }
-                if (data == "OK") {
+                if (response == "OK") {
+                    task.done = done ? "1" : "0"
+                    task._hover = false
+                    if (done) {
+                        task.label = task.label.replace("[UNDONE] ", "")
+                    }
+                    else {
+                        task._hover = false
+                        task.label = "[UNDONE] " + task.label
+                    }
                     return
                 }
-                alert("Unknown response")
+                alert("[updateTaskStatusDb] Unknown response")
             })
-            .fail((jqXHR, textStatus, errorThrown) => {
+            .fail(jqXHR => {
                 console.log(jqXHR)
-                alert("Save failed (AJAX: " + jqXHR.status + " " +
-                      jqXHR.statusText + ")")
-            })
-            .always(()=>{
-                //TODO
+                alert("Update task status failed!")
             })
         },
-        prepareTask(task) {
-            let ntask = {}
-            for (let key in task) {
-                if (key[0] != "_") {
-                    ntask[key] = task[key]
+        updateTaskDb(task) {
+            let params = {id: task.id, label: this.$refs['edit_'+task.id][0].value}
+            $.post("tasks.php?action=update", params)
+            .done(response => {
+                if (response == "KO") {
+                    alert("Update task failed!")
+                    return
                 }
-            }
-            return ntask
-        },
-        editActiveTask(idx)
-        {
-            this.tasks.active[idx]._edit = true
-            this.$nextTick(()=>{
-                this.$refs['activeEdit_'+idx][0].select()
+                if (response == "OK") {
+                    task.label = this.$refs['edit_'+task.id][0].value
+                    task._edit = false
+                    return
+                }
+                alert("[updateTaskStatusDb] Unknown response")
+            })
+            .fail(jqXHR => {
+                console.log(jqXHR)
+                alert("Update task failed!")
             })
         },
-        editDoneTask(idx)
-        {
-            this.tasks.done[idx]._edit = true
-            this.$nextTick(()=>{
-                this.$refs['doneEdit_'+idx][0].select()
+        deleteTaskDb(task) {
+            $.post("tasks.php?action=delete", {id: task.id})
+            .done(response => {
+                if (response == "KO") {
+                    alert("Delete task failed!")
+                    return
+                }
+                if (response == "OK") {
+                    let idx = this.tasks.findIndex((st) => task.id == st.id)
+                    console.log(idx)
+                    this.tasks.splice(idx, 1)
+                    return
+                }
+                alert("[updateTaskStatusDb] Unknown response")
+            })
+            .fail(jqXHR => {
+                console.log(jqXHR)
+                alert("Update task failed!")
             })
         },
-        cancelEditActiveTask(idx) {
-            this.tasks.active[idx]._edit = false
-        },
-        cancelEditDoneTask(idx) {
-            this.tasks.active[idx]._edit = false
-        },
-        saveActiveTask(idx) {
-            this.tasks.active[idx].label = 
-                this.$refs['activeEdit_'+idx][0].value
-            this.tasks.active[idx]._edit = false
-            this.saveTasks()
-        },
-        saveDoneTask(idx) {
-            this.tasks.done[idx].label = 
-                this.$refs['doneEdit_'+idx][0].value
-            this.tasks.done[idx]._edit = false
-            this.saveTasks()
-        },
+
         exportCSV() {
             let header = "\"" + ["No.", "Label", "Status"].join("\";\"") + "\"";
             let bodyActive = this.tasks.active.map((t, idx) => {
@@ -127,29 +152,17 @@ const app = new Vue({
             document.body.appendChild(downloadLink);
             downloadLink.click();
             document.body.removeChild(downloadLink);
-
-
-
         },
     },
     created() {
         $.post('tasks.php?action=get')
          .done(data => {
              console.log(data)
-             data.active = (data.active === undefined ? [] : data.active)
-             data.done = (data.done === undefined ? [] : data.done)
-             this.tasks = {
-                active: data.active.map(i => {
+             this.tasks = data.map(i => {
                     i._done = false; 
                     i._edit = false;
-                    return i}),
-                done: data.done.map(i => {
-                    i._done = false; 
-                    i._edit = false;
-                    return i
-                }) 
-        }
-        })
+                    return i})
+        }) 
         .fail(error => {
             console.log(error)
             alert('Retrieving tasks failed! ')

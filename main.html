@@ -23,7 +23,7 @@
             </div>
             <div id="active" class="mt-3">
                 <div id="active-title" class="shadow-sm mb-2">
-                    <span class="align-middle">Current tasks [{{ tasks.active.length }}]</span>
+                    <span class="align-middle">Current tasks [{{ activeTasks.length }}]</span>
                     <a id="new-task-button" href="#new-task" 
                        class="orange-control align-middle ml-5"
                        @click.prevent="showInput()">
@@ -41,11 +41,11 @@
                                @keydown.esc="input_visible=false"
                                @keydown.enter="addTask()">
                     </div>
-                    <div class="task" v-for="task, idx in tasks.active">
+                    <div class="task" v-for="task in activeTasks">
                         <a href="#move" class="col-cyan mr-2" 
                            @mouseover="task._hover = true"
                            @mouseleave="task._hover = false"
-                           @click.prevent="moveToDone(idx)">
+                           @click.prevent="updateTaskStatusDb(task, true)">
                             <i :class="{far: !task._hover, 'fa-square': !task._hover,
                                         fas: task._hover, 'fa-check-square': task._hover}"
                             ></i>
@@ -53,24 +53,24 @@
                         <label v-if="!task._edit">{{ task.label }}</label>
                         <input v-if="task._edit" class="task-input" 
                                type="text" :value="task.label"
-                               :ref="'activeEdit_'+idx"
-                               @keydown.enter = "saveActiveTask(idx)"
-                               @blur = "saveActiveTask(idx)"
-                               @keydown.escape = "cancelEditActiveTask(idx)">
+                               :ref="'edit_'+ task.id"
+                               @keydown.enter = "updateTaskDb(task)"
+                               @blur = "updateTaskDb(task)"
+                               @keydown.escape = "task._edit = false">
                         <a href="#delete" 
                            class="active-button orange-control ml-2"
-                           @click.prevent="deleteActive(idx)"
+                           @click.prevent="deleteTaskDb(task)"
                         ><i class="fas fa-trash-alt"></i></a>
                         <a href="#edit" 
                            class="active-button orange-control ml-1"
-                           @click.prevent="editActiveTask(idx)"
+                           @click.prevent="editTask(task)"
                         ><i class="fas fa-edit"></i></a>
                     </div>
                 </div>
             </div>
             <div id="done" class="mt-3">
                 <div id="done-title" class="shadow-sm mb-2">
-                    <span>Done [{{ tasks.done.length }}]</span>
+                    <span>Done [{{ doneTasks.length }}]</span>
                     <a href="#collapse" class="ml-5 cyan-control">
                         <i class="fas fa-caret-square-up" 
                            v-if="!done_collapsed" 
@@ -81,27 +81,27 @@
                     </a>
                 </div>
                 <div id="done-tasks" v-show="!done_collapsed">
-                    <div class="task" v-for="task, idx in tasks.done">
+                    <div class="task" v-for="task, idx in doneTasks">
                         <a href="#move" class="col-teal mr-2"
                            @mouseover="task._hover = true"
                            @mouseleave="task._hover = false"
-                           @click.prevent="moveToActive(idx)">
+                           @click.prevent="updateTaskStatusDb(task, false)">
                             <i :class="{far: task._hover, 'fa-square': task._hover,
                                         fas: !task._hover, 'fa-check-square': !task._hover}"></i></a>
                             <label v-if="!task._edit"><s>{{ task.label }}</s></label>
                             <input v-if="task._edit" class="task-input" 
                                    type="text" :value="task.label"
-                                   :ref="'doneEdit_'+idx"
-                                   @keydown.enter = "saveDoneTask(idx)"
-                                   @blur = "saveDoneTask(idx)"
-                                   @keydown.escape = "cancelEditDoneTask(idx)">
+                                   :ref="'edit_'+ task.id"
+                                   @keydown.enter = "updateTaskDb(task)"
+                                   @blur = "updateTaskDb(task)"
+                                   @keydown.escape = "task._edit = false">
                         <a href="#delete" 
                            class="done-button orange-control ml-2"
-                           @click.prevent="deleteDone(idx)"
+                           @click.prevent="deleteTaskDb(task)"
                         ><i class="fas fa-trash-alt"></i></a>
                         <a href="#edit" 
                         class="done-button orange-control ml-1"
-                        @click.prevent="editDoneTask(idx)"
+                        @click.prevent="editTask(task)"
                      ><i class="fas fa-edit"></i></a>
                     </div>
                 </div>

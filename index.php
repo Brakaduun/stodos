@@ -1,4 +1,5 @@
 <?php
+
     if(!isset($_POST['secret']) || $_POST['secret']!="SDFGREWR4234SDFSADFFRGRTFSEW5FGSDGSDGd") {
         if(!isset($_COOKIE['stodos_key']) || $_COOKIE['stodos_key']!="SDFGREWR4234SDFSADFFRGRTFSEW5FGSDGSDGd")
         {
@@ -10,7 +11,7 @@
     }
     else {
         setcookie("stodos_key", "SDFGREWR4234SDFSADFFRGRTFSEW5FGSDGSDGd",
-                  time() + (86400 * 7), "", "",  true, true);
+                  time() + (86400 * 365), "", "",  true, true);
         echo file_get_contents("main.html");
     }
 ?>
